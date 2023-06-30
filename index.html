@@ -139,6 +139,7 @@
                             function (tensor) {
                                 let prediccion;
                                 prediccion = model.predict(tensor)
+                                prediccion.print();
                                 argMax = prediccion.dataSync()
                                 if (argMax[0] > argMax[1]) {
                                     //console.log(0)
