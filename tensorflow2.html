@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.6.3/papaparse.min.js>
+    </script>
+    <link rel="icon" href="data:,">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+
+        //funcion para cargar el modelo tensorflow previamente entrenado en python
+        function cargaModelo(ruta) {
+            return new Promise(function (resolve) {
+                let model;
+                model = tf.loadLayersModel(ruta);
+                resolve(model);
+            })
+        }
+
+        //funcion para cargar el archivo csv, tiene problema con la ruta del archivo
+        function parseData(content) {
+            return new Promise(function (resolve) {
+                let data;
+                let data2;
+                Papa.parse(content, {
+                    header: false,
+                    download: true,
+                    skipEmptyLines: false,
+                    complete: function (results) {
+                        data = results.data;
+                        data2 = []
+                        data.forEach(function (o) {
+                            if (o[0] !== "") {
+                                data2.push(o.map(Number));
+                            }
+                        })
+                        resolve(data2);
+                    }
+                })
+
+            })
+        }
+
+        //función para transformar los datos en formato csv a tensor de tensorflow
+        //en este caso se transforma a un tenso de 3 dimensiones
+        function data2tensor(data) {
+            return new Promise(function (resolve) {
+                let tensor;
+                tensor = tf.tensor3d([data]);
+                resolve(tensor);
+            })
+        }
+
+        //funcion para cargar archivo csv, lee el archivo completo antes de pasarlo 
+        //a la libreria papa.parse, al parecer es mejor
+        function readFile(input) {
+            return new Promise(function (resolve, reject) {
+
+                let file = input.files[0];
+                //let file = document.getElementById('myfile').files[0];
+                let reader = new FileReader();
+                reader.readAsText(file);
+
+                reader.onload = function (event) {
+                    let csvData = event.target.result;
+                    let results = Papa.parse(csvData, { header: false });
+                    let data = results.data;
+
+                    let data2 = [];
+                    data.forEach(function (o) {
+                        if (o[0] !== "") {
+                            data2.push(o.map(Number));
+                        }
+                    })
+                    resolve(data2);
+                }
+                reader.onerror = function (event) {
+                    reject(console.log("error en la carga del archivo"));
+                }
+            })
+        }
+        /*
+        //funciones que se llama desde el boton 
+        function mostrarRuta() {
+            let rutaArchivo = document.getElementById('myfile').files[0].name
+
+            cargaModelo("jsmodel/model.json").then(
+                function (model) {
+                    parseData(rutaArchivo).then(
+                        function (data) {
+                            return data2tensor(data);
+                        }).then(function (tensor) {
+                            let prediccion;
+                            prediccion = model.predict(tensor)
+
+                            argMax = prediccion.dataSync()
+
+                            if (argMax[0] > argMax[1]) {
+                                console.log(0)
+                                document.getElementById("resultado").innerHTML = "Falla Externa";
+                            } else if (argMax[0] < argMax[1]) {
+                                console.log(1)
+                                document.getElementById("resultado").innerHTML = "Falla Interna";
+                            } else {
+                                console.log('indefinido')
+                                document.getElementById("resultado").innerHTML = "Indefinido";
+                            }
+                        })
+                }
+            )
+        }
+
+        */
+
+        //funciones que se llama desde el boton 
+        function mostrarRuta() {
+            let rutaArchivo = document.getElementById('myfile').files[0].name
+            cargaModelo("jsmodel/model.json").then(
+                function (model) {
+                    let input = document.getElementById('myfile');
+                    readFile(input).then(
+                        function (data) {
+                            return data2tensor(data);
+                            //console.log(data);
+                        }).then(
+                            function (tensor) {
+                                let prediccion;
+                                prediccion = model.predict(tensor)
+                                argMax = prediccion.dataSync()
+                                if (argMax[0] > argMax[1]) {
+                                    //console.log(0)
+                                    document.getElementById("resultado").innerHTML = "Falla Externa";
+                                } else if (argMax[0] < argMax[1]) {
+                                    //console.log(1)
+                                    document.getElementById("resultado").innerHTML = "Falla Interna";
+                                } else {
+                                    //console.log('indefinido')
+                                    document.getElementById("resultado").innerHTML = "Indefinido";
+                                }
+                            })
+                }
+            )
+        }
+
+    </script>
+
+    <h2>Cargar Archivo:</h2>
+    <label for="myfile">Elegir archivo:</label>
+    <input type="file" id="myfile" name="myfile"><br><br>
+    <input type="button" value="Evaluar Falla" onclick="mostrarRuta();">
+    <p id="resultado"></p>
+
+</body>
+
+</html>

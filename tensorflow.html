@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.6.3/papaparse.min.js>
+    </script>
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        //input_xs = tf.tensor2d([[1, 2]]);
+
+        function cargaModelo() {
+            model = undefined;
+            model = tf.loadLayersModel("jsmodel/model.json");
+            console.log("modelo cargado")
+            return Promise.resolve(model);
+            // or
+            // return Promise.reject("Failure");
+        };
+
+
+        const parseData = (content) => {
+            let data;
+            return new Promise((resolve) => {
+                Papa.parse(content, {
+                    header: false,
+                    download: true,
+                    skipEmptyLines: false,
+                    complete: (results) => {
+                        data = results.data;
+                        data2 = []
+                        data.forEach(function (o) {
+                            if (o[0] !== "") {
+                                data2.push(o.map(Number));
+                            }
+
+                        })
+                        resolve(data2);
+                    }
+                });
+
+            });
+        };
+
+        parseData("externo.csv").then(
+            (data) => {
+                console.log(data);
+            }
+        )
+
+
+        cargaModelo().then(
+            (model) => {
+
+
+                Papa.parse('interno.csv', {
+                    header: false,
+                    download: true,
+                    skipEmptyLines: false,
+                    complete: function (results) {
+
+                        data2 = []
+                        data = results.data;
+
+                        data.forEach(function (o) {
+                            if (o[0] !== "") {
+
+                                data2.push(o.map(Number));
+                            }
+
+                        })
+
+                        input_xs2 = tf.tensor3d([data2]);
+
+                        output = model.predict(input_xs2);
+                        output.print();
+                    }
+                })
+
+            });
+
+
+
+
+
+
+    </script>
+
+</body>
+
+</html>
