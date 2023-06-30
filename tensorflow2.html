@@ -122,7 +122,9 @@
         //funciones que se llama desde el boton 
         function mostrarRuta() {
             let rutaArchivo = document.getElementById('myfile').files[0].name
-            cargaModelo("jsmodel/model.json").then(
+            
+            cargaModelo("https://raw.githubusercontent.com/pelaokano/test_tensorflowjs/master/jsmodel/model.json").then(
+            //cargaModelo("jsmodel/model.json").then(
                 function (model) {
                     let input = document.getElementById('myfile');
                     readFile(input).then(
